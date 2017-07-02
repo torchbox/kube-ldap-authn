@@ -12,7 +12,7 @@ printf 'travis_fold:end:build\r'
 if [ "$TRAVIS_PULL_REQUEST" = "false" -a -n "$TRAVIS_TAG" ]; then
 	printf 'travis_fold:start:release\r'
 	printf '>>> Creating release.\n\n'
-	docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+	docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
 	docker tag $DOCKER_REPOSITORY:$TRAVIS_COMMIT $DOCKER_REPOSITORY:$TRAVIS_TAG
 	docker push $DOCKER_REPOSITORY:$TRAVIS_TAG
 	printf 'travis_fold:end:release\r'
