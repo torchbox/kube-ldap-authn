@@ -12,7 +12,9 @@ RUN apt-get update && apt-get -qy install libldap2-dev libsasl2-dev
 COPY requirements.txt /
 RUN pip install -r /requirements.txt
 
-COPY . /app
+WORKDIR /app
+COPY app.py .
 
 ENV FLASK_APP /app/app.py
-CMD [ "flask", "run" ]
+ENV PYTHONPATH /app
+CMD [ "uwsgi", "--master", "--disable-logging", "--workers=2", "--http-socket=:8087", "--module=app:app" ]
