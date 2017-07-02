@@ -1,0 +1,39 @@
+# LDAP search to connect to.  You normally want at least two for redundancy.
+LDAP_URL='ldap://ldap-a.example.com/ ldap://ldap-b.example.com'
+
+# If True, use STARTTLS to connect to the LDAP server.  You can disable this
+# if you're using ldaps:// URLs.
+LDAP_START_TLS = True
+
+# DN to bind to the directory as before searching.  Required.
+LDAP_BIND_DN = 'cn=kube-ldap-authn,ou=applications,dc=example,dc=com'
+
+# Password to bind as.  Required.
+LDAP_BIND_PASSWORD = 'mysecretpassword'
+
+# Attribute of the user entry that contains their username.
+LDAP_USER_NAME_ATTRIBUTE = 'uid'
+
+# Attribute of the user entry that contains their user id.  Kubernetes describes
+# this as "a string which identifies the end user and attempts to be more
+# consistent and unique than username".  If your users are posixAccounts,
+# uidNumber is a reasonable choice for this.
+LDAP_USER_UID_ATTRIBUTE = 'uidNumber'
+
+# Base DN to search for users in.
+LDAP_USER_SEARCH_BASE = 'ou=people,dc=example,dc=com'
+
+# Filter to search for users.  The string {token} is replaced with the token
+# used to authenticate.
+LDAP_USER_SEARCH_FILTER = "(&(accountStatus=active)(kubernetesToken={token}))"
+
+# Attribute of the group entry that contains the group name.
+LDAP_GROUP_NAME_ATTRIBUTE = 'cn'
+
+# Base DN to search for groups in.
+LDAP_GROUP_SEARCH_BASE = 'ou=groups,dc=example,dc=com'
+
+# Filter to search for groups.  The string {username} is replaced by the 
+# authenticated username and {dn} by the authenticated user's complete DN. This
+# example supports both POSIX groups and LDAP groups.
+LDAP_GROUP_SEARCH_FILTER = '(|(&(objectClass=posixGroup)(memberUid={username}))(&(member={dn})(objectClass=groupOfNames)))'

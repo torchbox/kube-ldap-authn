@@ -1,0 +1,9 @@
+language: c
+sudo: required
+services:
+- docker
+script:
+- ./travis-build.sh
+env:
+  global:
+  - COMMIT=${TRAVIS_COMMIT::8}
