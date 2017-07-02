@@ -1,0 +1,80 @@
+# This is an example DaemonSet configuration for kube-ldap-authn.  It runs it
+# on the master's host network on port 8087.
+
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: kube-ldap-authn
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      app: kube-ldap-authn
+
+  template:
+    metadata:
+      labels:
+        app: kube-ldap-authn
+    spec:
+      nodeSelector:
+        node-role.kubernetes.io/master: "true"
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+
+      volumes:
+      - name: config
+        secret:
+          secretName: ldap-authn-config
+
+      hostNetwork: true
+
+      containers:
+      - name: kube-ldap-authn
+        image: docker.io/torchbox/kube-ldap-authn:latest
+        imagePullPolicy: Always
+
+        env:
+        - name: KUBE_LDAP_AUTHN_SETTINGS
+          value: /config/config.py
+
+        resources:
+          limits:
+            cpu: 250m
+            memory: 64Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+
+        ports:
+        - containerPort: 8087 
+          hostPort: 8087
+          name: http
+          protocol: TCP
+
+        livenessProbe:
+          failureThreshold: 2
+          httpGet:
+            path: /healthz
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 3
+          successThreshold: 1
+          timeoutSeconds: 10
+
+        readinessProbe:
+          failureThreshold: 2
+          httpGet:
+            path: /healthz
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 3
+          successThreshold: 1
+          timeoutSeconds: 10
+
+        # Mount the cache storage we configured above.
+        volumeMounts:
+        - mountPath: /config
+          name: config
