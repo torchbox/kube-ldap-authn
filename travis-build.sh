@@ -15,6 +15,6 @@ if [ "$TRAVIS_PULL_REQUEST" = "false" -a -n "$TRAVIS_TAG" ]; then
 	docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
 	docker tag torchbox/kube-ldap-authn:$TRAVIS_COMMIT \
 		torchbox/kube-ldap-authn:$TRAVIS_TAG
-	docker push kube-ldap-authn:$TRAVIS_TAG
+	docker push torchbox/kube-ldap-authn:$TRAVIS_TAG
 	printf 'travis_fold:end:release\r'
 fi
