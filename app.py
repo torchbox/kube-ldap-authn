@@ -7,7 +7,7 @@
 # freely. This software is provided 'as-is', without any express or implied
 # warranty.
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 import ldap, ldap.filter, logging, sys
 
 logger = logging.getLogger('kube-ldap-authn')
@@ -18,11 +18,20 @@ hdl.setFormatter(formatter)
 logger.addHandler(hdl)
 
 app = Flask('kube-ldap-authn')
+
 try:
     app.config.from_envvar('KUBE_LDAP_AUTHN_SETTINGS')
 except RuntimeError as e:
     logger.error(str(e))
     sys.exit(1)
+
+if 'LDAP_TLS_CA_FILE' in app.config:
+    ldap.set_option(ldap.OPT_X_TLS_CACERTFILE, app.config['LDAP_TLS_CA_FILE'])
+    ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_DEMAND)
+
+@app.route('/healthz', methods=['GET'])
+def healthz():
+    return Response("OK\n", mimetype='text/plain')
 
 @app.route('/authn', methods=['POST'])
 def authn():
@@ -60,18 +69,26 @@ def authn():
     ld.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
 
     if app.config.get('LDAP_START_TLS', True) == True:
-        ld.start_tls_s()
+        try:
+            ld.start_tls_s()
+        except ldap.LDAPError as e:
+            logger.info("LDAP TLS error: " + str(e))
+            return auth_error
 
-    ld.simple_bind_s(app.config['LDAP_BIND_DN'],
-                     app.config['LDAP_BIND_PASSWORD'])
+    try:
+        ld.simple_bind_s(app.config['LDAP_BIND_DN'],
+                         app.config['LDAP_BIND_PASSWORD'])
+    except ldap.LDAPError as e:
+        logger.info("LDAP bind error: " + str(e))
+        return auth_error
 
     user_search = app.config['LDAP_USER_SEARCH_FILTER'].format(
                     token=ldap.filter.escape_filter_chars(token))
-    
+
     try:
         r = ld.search_s(app.config['LDAP_USER_SEARCH_BASE'],
                         ldap.SCOPE_SUBTREE,
-                        user_search, 
+                        user_search,
                         [ app.config['LDAP_USER_NAME_ATTRIBUTE'],
                           app.config['LDAP_USER_UID_ATTRIBUTE'] ])
     except ldap.LDAPError as e:
@@ -96,7 +113,7 @@ def authn():
         logger.info("LDAP search error: " + str(e))
         return auth_error
 
-    groups = [ 
+    groups = [
             i[1][app.config['LDAP_GROUP_NAME_ATTRIBUTE']][0].decode('ascii')
         for i in g ]
 
