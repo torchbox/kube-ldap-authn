@@ -5,7 +5,7 @@ set -e
 
 printf 'travis_fold:start:build\r'
 printf '>>> Building.\n\n'
-make -f Makefile.dist DOCKER_TAG="$TRAVIS_COMMIT" build
+make DOCKER_TAG="$TRAVIS_COMMIT" build
 printf 'travis_fold:end:build\r'
 
 # If this is a release, push the Docker image to Docker Hub.
