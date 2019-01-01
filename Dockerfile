@@ -7,10 +7,12 @@
 
 FROM python:3.6.1
 
-RUN apt-get update && apt-get -qy install libldap2-dev libsasl2-dev
+RUN apt-get update && \
+    apt-get -qy install libldap2-dev libsasl2-dev && \
+    find /var/cache -type f -delete
 
 COPY requirements.txt /
-RUN pip install -r /requirements.txt
+RUN pip install -r /requirements.txt && rm -rf /root/.cache/
 
 WORKDIR /app
 COPY app.py .
