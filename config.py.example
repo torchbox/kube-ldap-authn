@@ -27,13 +27,17 @@ LDAP_USER_SEARCH_BASE = 'ou=people,dc=example,dc=com'
 # used to authenticate.
 LDAP_USER_SEARCH_FILTER = "(&(accountStatus=active)(kubernetesToken={token}))"
 
+# Token stored as hash in LDAP
+LDAP_TOKEN_USE_HASH = False
+LDAP_TOKEN_HASH = sha256
+
 # Attribute of the group entry that contains the group name.
 LDAP_GROUP_NAME_ATTRIBUTE = 'cn'
 
 # Base DN to search for groups in.
 LDAP_GROUP_SEARCH_BASE = 'ou=groups,dc=example,dc=com'
 
-# Filter to search for groups.  The string {username} is replaced by the 
+# Filter to search for groups.  The string {username} is replaced by the
 # authenticated username and {dn} by the authenticated user's complete DN. This
 # example supports both POSIX groups and LDAP groups.
 LDAP_GROUP_SEARCH_FILTER = '(|(&(objectClass=posixGroup)(memberUid={username}))(&(member={dn})(objectClass=groupOfNames)))'

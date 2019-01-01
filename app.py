@@ -11,6 +11,7 @@ from flask import Flask, request, jsonify, Response
 import sys
 import ldap
 import logging
+import hashlib
 
 logger = logging.getLogger('kube-ldap-authn')
 logger.setLevel(logging.INFO)
@@ -122,7 +123,16 @@ def authn():
         return AUTH_ERROR
 
     token = request.json['spec']['token']
-    escaped_token = ldap.filter.escape_filter_chars(token)
+
+    if app.config.get('LDAP_TOKEN_USE_HASH'):
+        token_encoded = token.encode("utf-8")
+        h = hashlib.new(app.config.get('LDAP_TOKEN_HASH'))
+        h.update(token_encoded)
+        token_hash = h.hexdigest()
+        escaped_token = ldap.filter.escape_filter_chars(token_hash)
+    else:
+        escaped_token = ldap.filter.escape_filter_chars(token)
+
     user_search = app.config['LDAP_USER_SEARCH_FILTER'].format(escaped_token)
 
     try:
